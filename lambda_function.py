@@ -1,27 +1,18 @@
+from datetime import datetime
 import json
 import os
-from datetime import datetime
-
 import boto3
 
-QUEUE_NAME = os.environ['QUEUE_NAME']
-MAX_QUEUE_MESSAGES = os.environ['MAX_QUEUE_MESSAGES']
 DYNAMODB_TABLE = os.environ['DYNAMODB_TABLE']
 
-sqs = boto3.resource('sqs')
 dynamodb = boto3.resource('dynamodb')
 
-
 def lambda_handler(event, context):
+    # Count items in the Lambda event 
+    no_messages = str(len(event['Records']))
+    print("Found " +no_messages +" messages to process.")
 
-    # Receive messages from SQS queue
-    queue = sqs.get_queue_by_name(QueueName=QUEUE_NAME)
-
-    print("ApproximateNumberOfMessages:",
-          queue.attributes.get('ApproximateNumberOfMessages'))
-
-    for message in queue.receive_messages(
-            MaxNumberOfMessages=int(MAX_QUEUE_MESSAGES)):
+    for message in event['Records']:
 
         print(message)
 
@@ -30,13 +21,9 @@ def lambda_handler(event, context):
 
         response = table.put_item(
             Item={
-                'MessageId': message.message_id,
-                'Body': message.body,
+                'MessageId': message['messageId'],
+                'Body': message['body'],
                 'Timestamp': datetime.now().isoformat()
             }
         )
         print("Wrote message to DynamoDB:", json.dumps(response))
-
-        # Delete SQS message
-        message.delete()
-        print("Deleted message:", message.message_id)
