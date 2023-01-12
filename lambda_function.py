@@ -3,6 +3,8 @@ import json
 import os
 import boto3
 
+DYNAMODB_TABLE = os.environ['DYNAMODB_TABLE']
+
 dynamodb = boto3.resource('dynamodb')
 
 def lambda_handler(event, context):
@@ -15,7 +17,7 @@ def lambda_handler(event, context):
         print(message)
 
         # Write message to DynamoDB
-        table = dynamodb.Table('Message')
+        table = dynamodb.Table(DYNAMODB_TABLE)
 
         response = table.put_item(
             Item={
